@@ -1,0 +1,93 @@
+name: Build debug APK
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # 发布 Release 需要写权限（默认的 GITHUB_TOKEN 是只读的）
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6.0.1
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # 用 action 安装指定版本的 Gradle：
+      # 这样仓库里不需要提交 gradle-wrapper.jar 这个二进制文件，也能保证版本一致。
+      - name: Set up Gradle 9.6.0
+        uses: gradle/actions/setup-gradle@v6.4.0
+        with:
+          gradle-version: '9.6.0'
+
+      # 固定复用同一把调试签名密钥。
+      #
+      # 为什么必须这么做：Android 只允许"同一签名"覆盖安装。默认情况下每次构建
+      # 都会新生成一把 debug.keystore，于是手机上必须卸载旧版才能装新版（歌单、设置全丢）。
+      # 把这个文件缓存起来之后，所有构建都用同一把密钥，之后就能按版本覆盖安装了。
+      #
+      # 注意：GitHub 的缓存超过 7 天不用会被清理，那时会重新生成密钥，
+      # 又需要卸载安装一次。第一次启用此步骤后，也需要卸载一次（旧 APK 的签名对不上）。
+      - name: Cache debug keystore
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: android-debug-keystore-v1
+
+      # Gradle 的完整日志很大，GitHub 会把整个步骤的日志截断
+      #（"This step has been truncated due to its large size"），
+      # 而截断掉的正好是最前面、最关键的报错行。
+      # 所以：完整日志写进文件，stdout 只输出关键行，保证报错一定看得见。
+      # 同时把前几条错误以 annotation 上报，这样即使日志仍被截断也能从 API 读到。
+      - name: Build
+        run: |
+          set +e
+          gradle assembleDebug --stacktrace > build-log.txt 2>&1
+          status=$?
+          echo "===== 关键报错行 ====="
+          grep -nE "^e: |^error: |Unresolved reference|Type mismatch|None of the following|What went wrong|Execution failed|> Task .*FAILED" build-log.txt | head -60
+          echo "===== 日志末尾 30 行 ====="
+          tail -n 30 build-log.txt
+          grep -E "^e: " build-log.txt | head -5 | while IFS= read -r line; do
+            echo "::error title=Kotlin compile error::$line"
+          done
+          echo "===== 构建退出码: $status ====="
+          exit $status
+
+      # v4 跑在 node20 上（已被 GitHub 标记废弃），v7 跑在 node24；三个输入名都没变
+      - name: Upload APK
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: yinxia-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      # 把 APK 发布到 Release。
+      #
+      # 为什么需要这一步：Actions 的 Artifact 下载**强制要求登录 GitHub**
+      #（即使是公开仓库也一样），手机上经常点了没反应，而且 Artifact 90 天后过期。
+      # Release 的资源不需要登录、不过期、还是直接就是 .apk（不用解压），
+      # 于是可以固定用一个永久直链下载最新版：
+      #   https://github.com/MunroeGu/yinxia/releases/latest/download/yinxia.apk
+      #
+      # 用固定 tag "apk" 做滚动发布：每次推送都覆盖同一个 Release 的同一个资源名，
+      # 所以上面的链接永远指向最新构建。
+      - name: Publish APK to Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk yinxia.apk
+          gh release view apk > /dev/null 2>&1 || gh release create apk \
+            --title "肥鱼之声 APK" \
+            --notes "每次推送到 main 都会自动覆盖这里的 yinxia.apk，所以下载到的永远是提示里的最新版本。" \
+            --latest
+          gh release upload apk yinxia.apk --clobber
