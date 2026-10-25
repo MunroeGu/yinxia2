@@ -110,7 +110,7 @@ fun NowPlayingContent(
         VinylRecord(
             song = song,
             isPlaying = isPlaying,
-            modifier = Modifier.fillMaxWidth(0.86f),
+            modifier = Modifier.fillMaxWidth(0.95f),
         )
 
         Spacer(Modifier.height(28.dp))
@@ -233,7 +233,7 @@ fun NowPlayingContent(
 }
 
 /**
- * 黑胶唱片封面：底盘 + 圆形封面 + 中心孔一起随播放旋转，右上角一根唱臂随播放搭上/抬起。
+ * 黑胶唱片封面：黑胶底盘 + 随盘旋转的圆形封面，右上角一根唱臂随播放搭上/抬起。
  *
  * 旋转的实现细节：
  *  - 角度由 [Animatable] 持有，动画写在 `LaunchedEffect(isPlaying)` 里循环 animateTo。
@@ -241,8 +241,9 @@ fun NowPlayingContent(
  *    继续播放从同一角度接着转 —— 和真实唱机「停针再抬起接着放」的手感一致。
  *  - 每转完一整圈把角度 snap 回 0~360：不收的话角度会无限增大，
  *    转上几个小时后 Float 的精度就不够画出平滑旋转了。
- *  - 底盘的同心圆纹理是圆对称的，转起来本身看不出来；「在转」的视觉证据主要是
- *    封面图案在动。纹理负责的是静止时的质感（有沟槽，而不是一块纯色圆板）。
+ *  - **旋转只套在封面上**（graphicsLayer rotationZ）。底盘沟槽是同心圆、圆对称，
+ *    转起来没有任何视觉变化 —— 第一版把旋转加在底盘上、封面却静止，
+ *    结果整个唱片看起来纹丝不动（这个 bug 的根因）。
  *  - 一圈 [VINYL_ROTATION_MS]（20 秒）是主流音乐 App 唱片动画的常见速度，转太快会晕。
  */
 @Composable
@@ -274,12 +275,8 @@ private fun VinylRecord(
         val discColor = Color(0xFF17171B)
         val grooveColor = Color.White
 
-        // 旋转层 1：黑胶底盘 + 沟槽纹理
-        Canvas(
-            Modifier
-                .fillMaxSize()
-                .graphicsLayer { rotationZ = rotation.value },
-        ) {
+        // 黑胶底盘 + 沟槽纹理：同心圆是旋转对称的，转不转看不出来，静态画即可
+        Canvas(Modifier.fillMaxSize()) {
             val radius = size.minDimension / 2f
             drawCircle(color = discColor, radius = radius)
             // 外缘一圈高光，勾出轮廓
@@ -298,35 +295,23 @@ private fun VinylRecord(
             }
         }
 
-        // 圆形封面，直径约唱片的 68% —— 和主流音乐 App 的唱片比例一致
+        // 圆形封面，直径约唱片的 70%。**包在旋转层里** —— 封面图案才是
+        // "唱片在转"的视觉主体，底盘沟槽转起来没有视觉变化
         Artwork(
             song = song,
-            modifier = Modifier.fillMaxSize(0.68f),
+            modifier = Modifier
+                .fillMaxSize(0.70f)
+                .graphicsLayer { rotationZ = rotation.value },
             shape = CircleShape,
             targetPx = ArtworkLoader.LARGE_PX,
         )
 
-        // 旋转层 2：中心孔。放在封面之上、随封面同转，位置永远和封面圆心重合
-        Canvas(
-            Modifier
-                .fillMaxSize()
-                .graphicsLayer { rotationZ = rotation.value },
-        ) {
-            val hole = size.minDimension / 2f * 0.05f
-            drawCircle(color = Color(0xFF101013), radius = hole)
-            drawCircle(
-                color = Color.White.copy(alpha = 0.28f),
-                radius = hole,
-                style = Stroke(width = 1.dp.toPx()),
-            )
-        }
-
         // 唱臂：不随唱片转。pivot 固定在右上角，竖直向下为 0°，
         // 正角把针头往盘心方向压（搭上），负角往外摆（抬起）。
         Canvas(Modifier.fillMaxSize()) {
-            val pivot = Offset(size.width * 0.90f, size.height * 0.08f)
+            val pivot = Offset(size.width * 0.90f, size.height * 0.07f)
             rotate(degrees = armAngle, pivot = pivot) {
-                val needle = Offset(pivot.x, pivot.y + size.height * 0.32f)
+                val needle = Offset(pivot.x, pivot.y + size.height * 0.21f)
                 val armColor = Color(0xFF8A8595)
                 drawLine(
                     color = armColor,
@@ -345,6 +330,14 @@ private fun VinylRecord(
 /** 一整圈用时：太快会有点晕，20 秒和主流音乐 App 的唱片动画速度一致 */
 private const val VINYL_ROTATION_MS = 20_000
 
-/** 唱臂角度：0° = 竖直下垂（针头自然落在盘缘沟槽），正角搭向盘心，负角抬离盘面 */
-private const val VINYL_ARM_ENGAGED = 12f
-private const val VINYL_ARM_LIFTED = -25f
+/**
+ * 唱臂角度：0° = 竖直下垂。正角把针头往盘心方向压（搭上），负角往外摆（抬起）。
+ *
+ * 几何是按"搭上时针头落在外圈黑色轨道的中间"反推的（比例都相对容器边长）：
+ * 封面半径 = 0.35（fillMaxSize(0.70) 的一半），盘缘 = 0.50，轨道中线 = 0.425。
+ * 针头位置 = 轴点 (0.90, 0.07) + 长 0.21 的臂旋转 [VINYL_ARM_ENGAGED] 度，
+ * 代入 +10° 时针头到盘心的距离 ≈ 0.426 —— 正好压在轨道中线上。
+ * 抬起 -20° 时针头到盘心 ≈ 0.53，已在盘缘之外，视觉上就是"悬在唱片外面"。
+ */
+private const val VINYL_ARM_ENGAGED = 10f
+private const val VINYL_ARM_LIFTED = -20f
