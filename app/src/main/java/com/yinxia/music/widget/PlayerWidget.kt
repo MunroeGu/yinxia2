@@ -50,6 +50,16 @@ object PlayerWidget {
     /** 背板圆角，与 res/drawable/widget_background.xml 里的 corners 半径保持一致 */
     private const val BACKDROP_RADIUS_DP = 22f
 
+    /**
+     * 背板透明度系数：最终 alpha = 颜色资源里的 alpha × 这个系数。
+     * 资源里浅色 0xD9（85%）/ 深色 0xCC（80%），乘上 0.88 后约 75% / 70%，
+     * 比初版透一档。想再调透明度只动这一个数。
+     */
+    private const val BACKDROP_ALPHA_FACTOR = 0.88f
+
+    /** 渲染版本：改动渲染逻辑/配色时 +1，强制所有插件重推一次新样子（见 pushState 的签名） */
+    private const val RENDER_VERSION = 2
+
     /** 上一次处理过的封面，避免每次播放/暂停都重新缩一次图 */
     private var coverSongId = -1L
     private var coverImage: Bitmap? = null
@@ -108,7 +118,9 @@ object PlayerWidget {
         // 深浅模式也进签名：系统切换深浅色后，背板要跟着换一套底色/描边，
         // 不能因为"歌没换"就一直停在旧主题的样子
         val night = isNightMode(context)
-        val signature = "$songId|$title|$artist|$isPlaying|${cover != null}|$night"
+        // 渲染版本进签名：渲染逻辑/配色改动后强制所有插件重推一次新样子，
+        // 否则升级 App 后"歌没换"的插件会一直停在旧配色上
+        val signature = "v$RENDER_VERSION|$songId|$title|$artist|$isPlaying|${cover != null}|$night"
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         if (prefs.getString(KEY_LAST_STATE, null) == signature) return
         prefs.edit().putString(KEY_LAST_STATE, signature).apply()
@@ -178,6 +190,8 @@ object PlayerWidget {
         val seedArgb = songId.takeIf { it > 0 }
             ?.let { ArtworkLoader.cachedDominantColor(it) }
             ?.toArgb()
+        // 背板填充色 + 文字/图标颜色都从封面主色一起推导（没有主色时用默认底色）
+        val palette = widgetPalette(context, seedArgb)
 
         ids.forEach { id ->
             val options = manager.getAppWidgetOptions(id)
@@ -196,7 +210,8 @@ object PlayerWidget {
                     isPlaying = isPlaying,
                     cover = cover,
                     layoutRes = layoutRes,
-                    backdrop = backdropFor(context, widthDp, heightDp, seedArgb),
+                    backdrop = backdropFor(context, widthDp, heightDp, palette),
+                    palette = palette,
                 ),
             )
         }
@@ -210,11 +225,15 @@ object PlayerWidget {
         cover: Bitmap?,
         layoutRes: Int,
         backdrop: Bitmap,
+        palette: WidgetPalette,
     ): RemoteViews = RemoteViews(context.packageName, layoutRes).apply {
         setImageViewBitmap(R.id.widget_backdrop, backdrop)
 
         setTextViewText(R.id.widget_title, title ?: context.getString(R.string.app_name))
         setTextViewText(R.id.widget_artist, artist ?: context.getString(R.string.widget_idle))
+        // 文字颜色跟背板走：widgetPalette 从背板色推导，和底板协调又拉开对比
+        setTextColor(R.id.widget_title, palette.textPrimary)
+        setTextColor(R.id.widget_artist, palette.textSecondary)
 
         if (cover != null) {
             setImageViewBitmap(R.id.widget_cover, cover)
@@ -236,6 +255,10 @@ object PlayerWidget {
             R.id.widget_toggle,
             context.getString(if (isPlaying) R.string.action_pause else R.string.action_play),
         )
+        // 图标颜色也跟背板走（布局 XML 里的 android:tint 只是推送前的兜底色）
+        tintIcon(R.id.widget_prev, palette.icon)
+        tintIcon(R.id.widget_toggle, palette.icon)
+        tintIcon(R.id.widget_next, palette.icon)
 
         bindClick(
             R.id.widget_toggle,
@@ -256,25 +279,20 @@ object PlayerWidget {
     }
 
     /**
-     * 生成背板位图：圆角矩形 + 半透明填充 + 发丝描边，颜色来自当前歌曲封面的主色。
+     * 生成背板位图：圆角矩形 + 半透明填充 + 发丝描边，填充色来自 [WidgetPalette.fillArgb]
+     * （由 [widgetPalette] 从封面主色推导）。
      *
-     * - **保留现在的不透明度**：填充色的 alpha 直接取自颜色资源
-     *   （浅色 0xD9 / 深色 0xCC，`values-night` 由 [isNightMode] 对应的资源解析自动生效），
-     *   变的只是色相，透明度和原来完全一样；
-     * - 主色的亮度先夹进 0.20~0.60：近黑/近白的封面不至于把插件变成一块黑板或白板，
-     *   花哨壁纸上的文字可读性也有保证；
      * - 圆角半径和描边宽度按"位图边长 / 实际 dp"等比换算，位图被 fitXY 拉到多大，
      *   视觉上的 22dp 圆角 / 1dp 描边都不走样；
-     * - 同一个（歌，主题，尺寸）组合只生成一次，后续推送直接复用。
+     * - 同一个（背板色，尺寸）组合只生成一次，后续推送直接复用。
      */
     private fun backdropFor(
         context: Context,
         widthDp: Int,
         heightDp: Int,
-        seedArgb: Int?,
+        palette: WidgetPalette,
     ): Bitmap {
-        val night = isNightMode(context)
-        val key = "${seedArgb ?: -1}|$night|$widthDp*$heightDp"
+        val key = "${palette.fillArgb}|$widthDp*$heightDp"
         if (key == backdropKey) {
             backdropImage?.let { return it }
         }
@@ -293,16 +311,7 @@ object PlayerWidget {
         val radiusPx = BACKDROP_RADIUS_DP * density * scale
         val strokePx = (density * scale).coerceAtLeast(1f)
 
-        val baseColor = context.getColor(R.color.widget_background)
-        val fill = if (seedArgb != null) {
-            val alpha = android.graphics.Color.alpha(baseColor)
-            val hsv = FloatArray(3)
-            android.graphics.Color.colorToHSV(seedArgb, hsv)
-            hsv[2] = hsv[2].coerceIn(0.20f, 0.60f)
-            android.graphics.Color.HSVToColor(alpha, hsv)
-        } else {
-            baseColor
-        }
+        val fill = palette.fillArgb
         val outline = context.getColor(R.color.widget_outline)
 
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
@@ -325,6 +334,72 @@ object PlayerWidget {
         backdropKey = key
         backdropImage = bitmap
         return bitmap
+    }
+
+    /** 一次推送的整套配色：背板填充色 + 跟它推导出来的文字/图标颜色。 */
+    private data class WidgetPalette(
+        val fillArgb: Int,
+        val textPrimary: Int,
+        val textSecondary: Int,
+        val icon: Int,
+    )
+
+    /**
+     * 从封面主色（或默认底色）推导整套插件配色。
+     *
+     * 背板填充色：
+     *  - alpha 取自颜色资源（浅色 0xD9 / 深色 0xCC）再乘 [BACKDROP_ALPHA_FACTOR]，
+     *    资源仍是唯一的"透明度底数"，深浅模式各有一份；
+     *  - 主色亮度夹进 0.20~0.60：近黑/近白的封面不至于把插件变成一块黑板或白板。
+     *
+     * 文字/图标颜色：
+     *  - 深浅由背板的**感知亮度**决定（>= 0.5 用深色字，否则浅色字）——HSV 的 V 不等于
+     *    人眼感受到的明暗，判断深浅必须用加权亮度；
+     *  - 都取背板的色相做极淡的染色（饱和度压到原来的 25%~35%），明度拉开对比 ——
+     *    和背板协调、又能从背板里区分出来，且不会艳。
+     */
+    private fun widgetPalette(context: Context, seedArgb: Int?): WidgetPalette {
+        val base = context.getColor(R.color.widget_background)
+        val fill = if (seedArgb != null) {
+            val alpha = (android.graphics.Color.alpha(base) * BACKDROP_ALPHA_FACTOR)
+                .toInt()
+                .coerceIn(0, 255)
+            val hsv = FloatArray(3)
+            android.graphics.Color.colorToHSV(seedArgb, hsv)
+            hsv[2] = hsv[2].coerceIn(0.20f, 0.60f)
+            android.graphics.Color.HSVToColor(alpha, hsv)
+        } else {
+            base
+        }
+
+        val hsv = FloatArray(3)
+        android.graphics.Color.colorToHSV(fill, hsv)
+        val hue = hsv[0]
+        val seedSat = hsv[1]
+
+        val textPrimary: Int
+        val textSecondary: Int
+        val icon: Int
+        if (luminanceOf(fill) >= 0.5f) {
+            // 浅背板 → 深色字：明度从深到浅 = 标题 0.13 / 图标 0.24 / 副标题 0.38
+            textPrimary = android.graphics.Color.HSVToColor(255, floatArrayOf(hue, seedSat * 0.35f, 0.13f))
+            icon = android.graphics.Color.HSVToColor(255, floatArrayOf(hue, seedSat * 0.35f, 0.24f))
+            textSecondary = android.graphics.Color.HSVToColor(255, floatArrayOf(hue, seedSat * 0.30f, 0.38f))
+        } else {
+            // 深背板 → 浅色字：明度从亮到暗 = 标题 0.95 / 图标 0.82 / 副标题 0.74
+            textPrimary = android.graphics.Color.HSVToColor(255, floatArrayOf(hue, seedSat * 0.30f, 0.95f))
+            icon = android.graphics.Color.HSVToColor(255, floatArrayOf(hue, seedSat * 0.30f, 0.82f))
+            textSecondary = android.graphics.Color.HSVToColor(255, floatArrayOf(hue, seedSat * 0.25f, 0.74f))
+        }
+        return WidgetPalette(fill, textPrimary, textSecondary, icon)
+    }
+
+    /** 加权感知亮度（0~1）。判断"背板算浅还是算深"用它，不用 HSV 的 V。 */
+    private fun luminanceOf(color: Int): Float {
+        val r = android.graphics.Color.red(color) / 255f
+        val g = android.graphics.Color.green(color) / 255f
+        val b = android.graphics.Color.blue(color) / 255f
+        return 0.299f * r + 0.587f * g + 0.114f * b
     }
 
     /** 只按歌曲 id 取封面（receiver 里只有 mediaId，没有 Song 对象） */
@@ -414,6 +489,23 @@ object PlayerWidget {
             )
         } else {
             setOnClickPendingIntent(viewId, pendingIntent)
+        }
+    }
+
+    /**
+     * 给控件图标上色。Android 12+ 走 setImageTintList（框架推荐、重建视图后不易丢），
+     * 低版本退回 setColorFilter —— 对纯色矢量图标两者效果一致。
+     * 布局 XML 里保留的 android:tint 只是"推送前"的兜底色，运行时一定会被这里覆盖。
+     */
+    private fun RemoteViews.tintIcon(viewId: Int, color: Int) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            setColorStateList(
+                viewId,
+                "setImageTintList",
+                android.content.res.ColorStateList.valueOf(color),
+            )
+        } else {
+            setInt(viewId, "setColorFilter", color)
         }
     }
 
