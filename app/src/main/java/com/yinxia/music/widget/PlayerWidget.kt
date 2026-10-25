@@ -217,7 +217,7 @@ object PlayerWidget {
         }
     }
 
-    fun buildViews(
+    private fun buildViews(
         context: Context,
         title: String?,
         artist: String?,
