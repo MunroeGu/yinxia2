@@ -1,0 +1,45 @@
+[versions]
+# 工具链（AGP 9 时代，和 AGP 8 的写法差别很大，改之前先看 README 第六节）
+#
+# 1) AGP 9 起 Kotlin 支持是“内置”的（built-in Kotlin）：
+#    不能再应用 org.jetbrains.kotlin.android，Kotlin 版本由 AGP 自带。
+#    AGP 9.4.1 的 POM 里依赖 KGP 2.2.10，所以下面的 kotlin 版本必须写 2.2.10
+#    —— 它只用来对齐 Compose 编译器插件，不能随便升到 2.4.x。
+# 2) compileSdk 必须 37：Compose 1.12 起强制要求 compileSdk 37 + AGP 9。
+agp = "9.4.1"
+kotlin = "2.2.10"
+
+composeBom = "2026.09.00"
+media3 = "1.11.1"
+coreKtx = "1.19.1"
+activityCompose = "1.13.0"
+lifecycle = "2.11.0"
+
+# 这里故意没有 kotlinx-coroutines 的条目：
+# compose-runtime 会直接依赖 kotlinx-coroutines-android，内置 Kotlin 下也能直接用，
+# 少写一个版本号就少一处出错的地方。
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+# 注意用 lifecycle-viewmodel，不要用 lifecycle-viewmodel-ktx（2.8 起后者已变成空壳）
+androidx-lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle" }
+
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+# animateColorAsState 在 animation 里（不在 animation-core），主题色过渡要用
+androidx-compose-animation = { group = "androidx.compose.animation", name = "animation" }
+androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+
+androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
+androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3" }
+androidx-media3-common = { group = "androidx.media3", name = "media3-common", version.ref = "media3" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+# Compose 编译器插件必须和内置的 Kotlin 版本完全一致
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">肥鱼之声</string>
+
+    <string name="library_title">音乐库</string>
+    <string name="search_hint">搜索歌曲、歌手或专辑</string>
+    <string name="songs_count">共 %1$d 首</string>
+
+    <string name="permission_title">需要读取本地音乐</string>
+    <string name="permission_message">授予权限后即可扫描并播放手机里的音频文件。所有内容都在你的设备上，不会上传。</string>
+    <string name="permission_grant">授予权限</string>
+    <string name="permission_settings">去系统设置开启</string>
+
+    <string name="state_loading">正在扫描本地音乐…</string>
+    <string name="state_empty">没有找到音乐</string>
+    <string name="state_empty_hint">把音频文件放进手机存储后再试试</string>
+    <string name="state_no_folder">当前扫描范围下没有歌曲</string>
+    <string name="state_no_folder_hint">去右上角的「扫描范围」勾选更多文件夹</string>
+
+    <string name="unknown_artist">未知歌手</string>
+    <string name="action_refresh">重新扫描</string>
+    <string name="action_close">收起</string>
+    <string name="action_play">播放</string>
+    <string name="action_pause">暂停</string>
+    <string name="action_next">下一首</string>
+    <string name="action_previous">上一首</string>
+    <string name="action_shuffle">随机播放</string>
+    <string name="action_repeat">循环模式</string>
+    <string name="now_playing">正在播放</string>
+
+    <string name="action_cancel">取消</string>
+    <string name="action_select_all">全选</string>
+    <string name="action_delete">删除</string>
+    <string name="action_done">完成</string>
+    <string name="action_sort">排序方式</string>
+    <string name="action_scan_range">扫描范围</string>
+    <string name="selected_count">已选 %1$d 首</string>
+    <string name="state_no_result">没有匹配的歌曲</string>
+
+    <string name="sort_title">排序方式</string>
+    <string name="sort_menu_hint">选择后立即生效，并会记住你的选择</string>
+    <string name="sort_title_asc">名称（A → Z）</string>
+    <string name="sort_title_desc">名称（Z → A）</string>
+    <string name="sort_date_desc">添加时间（新 → 旧）</string>
+    <string name="sort_date_asc">添加时间（旧 → 新）</string>
+    <string name="sort_manual">手动排序（拖动调整）</string>
+    <string name="manual_sort_title">拖动调整顺序</string>
+    <string name="manual_sort_hint">长按任意一行，上下拖动即可调整顺序；拖到屏幕边缘会自动滚动</string>
+
+    <string name="folder_title">扫描范围</string>
+    <string name="folder_message">只扫描勾选的文件夹。全部勾选时等于扫描整个设备。</string>
+    <string name="folder_scan_all">扫描全部文件夹</string>
+    <string name="folder_song_count">%1$d 首</string>
+    <string name="folder_empty">没有可选的文件夹</string>
+
+    <string name="delete_title">删除歌曲</string>
+    <string name="delete_message">将从设备上永久删除 %1$d 个音频文件。系统会再向你确认一次，删除后无法恢复。</string>
+    <string name="delete_failed">删除失败，文件可能已被其他应用占用</string>
+
+    <string name="action_theme">主题色</string>
+    <string name="theme_title">默认主题色</string>
+    <string name="theme_message">歌曲有封面时，界面自动跟随封面颜色；没有封面时用下面选的颜色。深色模式下会自动调整明暗。</string>
+    <string name="theme_reset">不指定，用主题默认紫罗兰</string>
+    <string name="theme_selected">已选中</string>
+
+    <string name="accent_violet">紫罗兰</string>
+    <string name="accent_indigo">靛蓝</string>
+    <string name="accent_blue">湖蓝</string>
+    <string name="accent_cyan">青蓝</string>
+    <string name="accent_teal">青绿</string>
+    <string name="accent_green">松绿</string>
+    <string name="accent_amber">琥珀</string>
+    <string name="accent_orange">橘橙</string>
+    <string name="accent_red">绯红</string>
+    <string name="accent_pink">玫红</string>
+
+    <string name="widget_idle">未在播放</string>
+    <string name="widget_description">显示当前歌曲并控制播放，可自由调整大小</string>
+
+    <string name="action_song_details">歌曲信息</string>
+    <string name="playlist_title">歌单</string>
+    <string name="playlist_all">全部</string>
+    <string name="playlist_new">新建歌单</string>
+    <string name="playlist_name_hint">歌单名称</string>
+    <string name="playlist_add_title">加入歌单</string>
+    <string name="playlist_add_selected">已选 %1$d 首</string>
+    <string name="playlist_create_and_add">新建并加入</string>
+    <string name="playlist_rename">重命名</string>
+    <string name="playlist_delete">删除歌单</string>
+    <string name="playlist_remove_selected">移出歌单</string>
+    <string name="playlist_delete_message">删除歌单「%1$s」？歌曲文件不会被删除。</string>
+    <string name="playlist_empty">这个歌单还没有歌曲</string>
+    <string name="playlist_empty_hint">在音乐库里长按歌曲，选「歌单」加进来</string>
+    <string name="action_confirm">确定</string>
+    <string name="action_save">保存</string>
+</resources>

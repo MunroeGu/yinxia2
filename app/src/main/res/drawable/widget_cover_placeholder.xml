@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  没有封面时插件里显示的默认封面：直接用用户提供的那张插画。
+  图是方形，配合封面 View 的 centerCrop，任何尺寸都不会变形。
+  底下一层纯色只是兜底，万一图片没加载出来也不会是个空洞。
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/widget_placeholder" />
+        </shape>
+    </item>
+    <item android:drawable="@drawable/cover_placeholder" />
+</layer-list>

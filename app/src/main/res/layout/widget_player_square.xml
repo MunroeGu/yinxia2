@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  接近正方形的插件用竖排：封面 / 歌名 / 歌手 / 一排等宽按钮。
+  封面是**固定正方形**（56dp），上下各放一个可伸缩的空 LinearLayout 吸收多余高度 ——
+  这样封面永远不会被拉成长方形（之前用 weight 撑高封面，方图被裁成竖条，看起来像被拉长）。
+
+  ⚠️ 占位**只能用 RemoteViews 允许的控件**（FrameLayout / LinearLayout / TextView / ImageView…）。
+  之前这里用的是普通 <View> 和 android.widget.Space，两个都不在允许列表里，
+  结果插件一被拉成 n×2（高度够 → 选中这个布局）就 inflate 失败，
+  桌面上直接显示"载入窗口小部件时出现问题"。
+
+  根是 FrameLayout + backdrop ImageView 的原因见 widget_player.xml 顶部的说明：
+  背板颜色随封面主色变，动态上色只能靠位图，垫在最底层由 App 推送。
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/widget_backdrop"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitXY"
+        android:src="@drawable/widget_background" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <ImageView
+            android:id="@+id/widget_cover"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/widget_cover_placeholder" />
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="@string/app_name"
+            android:textColor="@color/widget_text_primary"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_artist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="@string/widget_idle"
+            android:textColor="@color/widget_text_secondary"
+            android:textSize="11sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/widget_prev"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/action_previous"
+                android:padding="5dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_skip_previous"
+                android:tint="@color/widget_icon" />
+
+            <ImageButton
+                android:id="@+id/widget_toggle"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/action_play"
+                android:padding="4dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_play"
+                android:tint="@color/widget_icon" />
+
+            <ImageButton
+                android:id="@+id/widget_next"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/action_next"
+                android:padding="5dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_skip_next"
+                android:tint="@color/widget_icon" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+    </LinearLayout>
+</FrameLayout>

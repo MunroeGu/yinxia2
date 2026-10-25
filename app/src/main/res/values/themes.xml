@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      界面完全由 Compose 绘制，这里只负责启动窗口的底色。
+      不依赖 Material Components 库，减少一个依赖项。
+    -->
+    <style name="Theme.Yinxia" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/splash_background</item>
+    </style>
+</resources>

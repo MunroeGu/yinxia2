@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 自适应图标背景色（深蓝），取自 App 图标插画的背景主色调 -->
+    <color name="ic_launcher_background">#1B4A8F</color>
+    <!-- 启动瞬间的窗口底色，避免白屏闪一下 -->
+    <color name="splash_background">#FFFBFE</color>
+
+    <!-- 桌面插件（浅色） -->
+    <color name="widget_background">#D9F4F0FA</color>
+    <color name="widget_text_primary">#1C1B1F</color>
+    <color name="widget_text_secondary">#5A5566</color>
+    <color name="widget_icon">#4A4458</color>
+    <color name="widget_placeholder">#B3E7E0EC</color>
+    <color name="widget_outline">#1F000000</color>
+</resources>

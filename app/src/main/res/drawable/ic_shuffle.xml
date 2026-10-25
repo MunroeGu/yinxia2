@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 随机播放：两条交叉箭头 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M3,7 h3 q2,0 3.5,2 l5,6 q1.5,2 3.5,2 h2" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M3,17 h3 q2,0 3.5,-2 l5,-6 q1.5,-2 3.5,-2 h2" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M19.2,4.5 L22.4,7 L19.2,9.5 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M19.2,14.5 L22.4,17 L19.2,19.5 Z" />
+</vector>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  自适应图标前景：两支连梁八分音符（♫）。
+  画布 108x108，内容控制在中央 72x72 安全区内。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 左边符干 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,76 L48,18 L52,18 L52,76 Z" />
+    <!-- 连接两符干的横梁 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,18 L78,18 L78,27 L48,27 Z" />
+    <!-- 右边符干 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M74,68 L74,18 L78,18 L78,68 Z" />
+    <!-- 左符头（圆，圆心 40,76，半径 9） -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,85 a9,9 0 1,0 0,-18 a9,9 0 1,0 0,18 Z" />
+    <!-- 右符头（圆，圆心 66,68，半径 9） -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M66,77 a9,9 0 1,0 0,-18 a9,9 0 1,0 0,18 Z" />
+</vector>

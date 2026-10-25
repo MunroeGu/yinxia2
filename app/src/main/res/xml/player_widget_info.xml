@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  桌面插件的声明。
+  resizeMode + minResizeWidth/Height 让它可以被自由拉伸；
+  targetCellWidth/Height 和 previewLayout 是 Android 12+ 才认的属性，
+  低版本会直接忽略，所以放在同一个文件里没问题。
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_description"
+    android:initialLayout="@layout/widget_player"
+    android:minHeight="60dp"
+    android:minResizeHeight="60dp"
+    android:minResizeWidth="110dp"
+    android:minWidth="180dp"
+    android:previewLayout="@layout/widget_player"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellHeight="1"
+    android:targetCellWidth="3"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />

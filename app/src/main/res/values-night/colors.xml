@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 桌面插件（深色） -->
+    <color name="widget_background">#CC1E1A26</color>
+    <color name="widget_text_primary">#EDE8F5</color>
+    <color name="widget_text_secondary">#B5AEC4</color>
+    <color name="widget_icon">#C9C2D8</color>
+    <color name="widget_placeholder">#B32B2535</color>
+    <color name="widget_outline">#26FFFFFF</color>
+</resources>

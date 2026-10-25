@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  把用户提供的方形插画塞进自适应图标的安全区。
+  自适应图标会裁掉四周约 1/6，并用蒙版裁形状，所以这里用 17% 的 inset 把整张图缩进内圈 ——
+  否则人脸会被裁掉一圈。外面的背景色在蒙版边缘露出来，取的是插画主色调。
+-->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@mipmap/ic_launcher_foreground"
+    android:inset="17%" />

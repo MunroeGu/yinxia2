@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Android 13 (API 33) 起读取本地音频改用 READ_MEDIA_AUDIO -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <!-- 老系统回退权限，maxSdkVersion 保证 Android 13+ 不再请求它 -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- Android 9 及以下删除音频文件需要写权限；10 起改用系统的删除确认流程 -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <!-- 通知栏播放控制（媒体通知在 Android 13+ 通常免授权，仍声明以示完整） -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 后台播放前台服务：Android 14 (API 34) 起必须声明具体类型 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Yinxia">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Yinxia"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          exported="true" + MediaSessionService 的 intent-filter 是 Media3 的官方要求：
+          系统媒体控件（锁屏、通知栏、蓝牙耳机按键）通过这个入口连回来。
+        -->
+        <service
+            android:name=".player.PlaybackService"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+            </intent-filter>
+        </service>
+
+        <!--
+          桌面插件。按钮点击是通过 PendingIntent 发给自己进程的广播，
+          exported 保持 true 是为了让系统能可靠地送达 APPWIDGET_UPDATE。
+        -->
+        <receiver
+            android:name=".widget.PlayerWidgetProvider"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.yinxia.music.widget.ACTION_TOGGLE" />
+                <action android:name="com.yinxia.music.widget.ACTION_NEXT" />
+                <action android:name="com.yinxia.music.widget.ACTION_PREV" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/player_widget_info" />
+        </receiver>
+    </application>
+
+</manifest>
